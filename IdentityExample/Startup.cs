@@ -3,13 +3,23 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using NETCore.MailKit.Extensions;
+using NETCore.MailKit.Infrastructure.Internal;
 
 namespace IdentityExample
 {
     public class Startup
     {
+        private readonly IConfiguration _config;
+
+        public Startup(IConfiguration config)
+        {
+            _config = config;
+        }
+
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<AppDbContext>(config =>
@@ -24,6 +34,8 @@ namespace IdentityExample
                 config.Password.RequireNonAlphanumeric = false;
                 config.Password.RequireUppercase = false;
                 config.Password.RequiredLength = 4;
+
+                config.SignIn.RequireConfirmedEmail = true;
             })
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddDefaultTokenProviders();
@@ -33,6 +45,9 @@ namespace IdentityExample
                 config.Cookie.Name = "Grandpas.Cookie";
                 config.LoginPath = "/Home/Login";
             });
+
+            services.AddMailKit(config =>
+                config.UseMailKit(_config.GetSection("Email").Get<MailKitOptions>()));
 
             services.AddControllersWithViews();
         }
